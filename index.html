@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Grails-zap-security-tests</title>
+    <title>Grails ZAP Security Tests Plugin</title>
   </head>
 
   <body>
@@ -18,8 +18,8 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/osoco/grails-zap-security-tests">View on GitHub</a>
 
-          <h1 id="project_title">Grails-zap-security-tests</h1>
-          <h2 id="project_tagline">Grails plugin to run security tests from your app functional tests using the OWASP's ZAP proxy</h2>
+          <h1 id="project_title">Grails ZAP Security Tests Plugin</h1>
+          <h2 id="project_tagline">Automated security tests using the OWASP Zed Attach Proxy</h2>
 
             <section id="downloads">
               <a class="zip_download_link" href="https://github.com/osoco/grails-zap-security-tests/zipball/master">Download this project as a .zip file</a>
@@ -31,49 +31,177 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
+
         <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Introduction</h3>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>The <em>ZAP Security Tests</em> plugin for Grails allows you to run completely automated <strong>security tests</strong> using the <strong>OWASP's <a href="https://www.owasp.org/index.php/OWASP_Zed_Attack_Proxy_Project">Zed Attack Proxy</a></strong> (aka ZAP) to scan your web application for detecting security vulnerabilities.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p>ZAP is an easy to use integrated penetration testing tool ideal for developers and functional testers that provides automated scanners as well as a set of tools that allow you to find security vulnerabilities manually. You can find more details about the ZAP features at the <a href="https://www.owasp.org/index.php/OWASP_Zed_Attack_Proxy_Project">project website</a>.</p>
+
+<h3>
+<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>How It Works?</h3>
+
+<p>The ZAP Security Tests plugin extends the Grails default functional tests behaviour adding a new <code>-zap</code> option that you can pass to convert your functional test suite into security tests.</p>
+
+<p>If you specify the <code>-zap</code> option the plugin controls ZAP programmatically through its REST based API in order your browser-based functional tests run normally, but using ZAP as an HTTP intermediary proxy. This way ZAP can learn the application URLs visited by functional tests. If functional tests pass successfully then the plugin requests ZAP to actively scan the application by using known attack vectors against the application URLs. If any vulnerability is detected then the test execution will fail and report the corresponding security warnings.</p>
+
+<p>The plugin executes the following steps:</p>
+
+<ol>
+  <li>Starts ZAP (in GUI or daemon mode, after the plugin's configuration).</li>
+  <li>Waits for ZAP to be started and listening at the configured port.</li>
+  <li>Establishes system properties to pass proxy's host and port values so your functional tests can be configured to use the specified proxy.</li>
+  <li>Executes your functional tests.</li>
+  <li>Instructs ZAP to spider through the site to discover more application resources.</li>
+  <li>Requests ZAP to launch an active scanning on all the collected URLs.</li>
+  <li>Stores the resulting ZAP session under the test reports directory, so you can inspect security results later.</li>
+  <li>Checks for security alerts. If any vulnerability has been detected the execution fails outputting the corresponding security alerts.</li>
+  <li>Stops ZAP proxy.</li>
+</ol>
+
+<p>As you may be thinking, this plugin is useful to integrate security testing in your <strong>continuous integration process</strong>.</p>
+
+<h3>
+<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Installation</h3>
+
+<p>Add the following dependency to your plugins block at <code>BuildConfig.groovy</code>:</p>
+
+<pre><code>compile ":zap-security-tests:0.1"</code></pre>
+
+<p>Note that the plugin <strong>does not include the own ZAP proxy</strong> that should be previously installed in your box. You can download ZAP proxy from the <a href="http://code.google.com/p/zaproxy/downloads/list">downloads page</a>.</p>
+
+<h3>
+<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Usage</h3>
+
+<h4>Run security tests and generates reports</h4>
+
+<h5>Usage:</h5>
+
+<pre><code>grails [environment]* test-app [names]* -zap [-daemon]</code></pre>
+
+<h5>Examples:</h5>
+
+<pre><code>grails test-app -zap
+grails test-app functional: -zap</code></pre>
+
+<p>Or you can run as security tests only certain functional test types:</p>
+
+<pre><code>
+grails test-app functional:spock -zap
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>If you want to run the proxy in daemon mode (e.g. in a headless server) you can specify the option <code>-daemon</code>:</p>
+
+<pre><code>grails test-app functional: -zap -daemon</code></pre>
+
+<h4>Start or stop ZAP proxy</h4>
+
+<h5>Usage:</h5>
+
+<pre><code>grails start-zap [-daemon]
+grails stop-zap
+</code></pre>
 
 <h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Configuration</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>You can configure the plugin through the file <code>ZapSecurityTestsConfig.groovy</code> at the <code>grails-app/conf</code> directory.</p>
+
+<p>Once installed, the plugin creates the following sample configuration file that you should edit to adapt to your environment:</p>
+
+<pre><code>import org.zaproxy.clientapi.core.Alert
+
+zap {
+    // Absolute path where ZAP is installed
+    installDir = '/opt/zaproxy'
+
+    // Address the proxy will bind
+    proxyHost = 'localhost'
+
+    // Port the proxy will listen
+    proxyPort = 8090
+
+    // System properties the plugin will set with proxy host and port values
+    // to allow you to configure the functional tests to use the ZAP proxy
+    proxyHostSystemProperty = 'ZAP_PROXY_HOST'
+    proxyPortSystemProperty = 'ZAP_PROXY_PORT'
+
+    // Subdirectory of test reports dir where ZAP sessions will be stored
+    reportsDir = 'zap'
+
+    // ignoredAlerts specify a collection of alerts (instances of
+    // org.zaproxy.clientapi.core.Alert) that will be ignored if reported
+    // by ZAP.
+    //
+    // Missing elements match everything, so the following collection of
+    // ignoredAlerts will ignore all alerts of risk Low or Informational:
+    //
+    //   ignoredAlerts = [
+    //       new Alert(null, null, Alert.Risk.Low, null),
+    //       new Alert(null, null, Alert.Risk.Informational, null)
+    //   ]
+    //
+    // Another example to ignore three specific security alerts:
+    //
+    //   ignoredAlerts = [
+    //       new Alert('X-Content-Type-Options header missing', null),
+    //       new Alert('X-Frame-Options header not set', null),
+    //       new Alert('Content-type header missing', null)
+    //   ]
+    ignoredAlerts = []
+
+    // requiredAlerts specify a collection of alerts (instances of
+    // org.zaproxy.clientapi.core.Alert) that will fail if not present.
+    requiredAlerts = []
+
+    // Timeout in millisecond the proxy will wait for ZAP to start
+    timeout = 10000
+
+    // Enable debug in the REST based API interactions with ZAP
+    debug = false
+}</code></pre>
+
+<p>It's important to note that you should configure your functional tests to use the ZAP proxy
+when the system properties specified by the plugin are present. For instance, you can configure
+Geb-based functional tests through <code>GebConfig.groovy</code> in the following way:</p>
+
+<pre><code>
+driver = {
+    def driver = new HtmlUnitDriver()
+    if (System.getProperty('ZAP_PROXY_HOST') && System.getProperty('ZAP_PROXY_PORT')) {
+        String zapProxyHost = System.getProperty('ZAP_PROXY_HOST')
+        int zapProxyPort = System.getProperty('ZAP_PROXY_PORT').toInteger()
+        driver.setProxy(zapProxyHost, zapProxyPort)
+    }
+    driver
+}
+</code></pre>
 
 <h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Warning</h3>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p>It should be noted this plugin can only find certain types of vulnerabilities. Logical vulnerabilities, such as broken access control, will not be found by any active or automated vulnerability scanning, so manual penetration testing should always be performed in addition to active scanning to find all types of vulnerabilities in your applications.</p>
 
 <h3>
 <a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>Plugin authored by <a href="https://github.com/theratpack">The Rat Pack</a> group of programmers.</p>
 
 <h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>Having trouble with the plugin? Please send us your <a href="https://github.com/theratpack/grails-zap-security-tests-plugin/issues">feedbacks or issues</a>.</p>
+
       </section>
     </div>
 
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">Grails-zap-security-tests maintained by <a href="https://github.com/osoco">osoco</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+        <p class="copyright">Grails ZAP Security Tests Plugin is maintained by <a href="https://github.com/theratpack">The Rat Pack</a></p>
       </footer>
     </div>
-
-    
 
   </body>
 </html>
