@@ -24,10 +24,6 @@ class ZapSecurityTestsGrailsPlugin {
 
     def version = "0.1"
     def grailsVersion = "2.0 > *"
-    def pluginExcludes = [
-        "grails-app/views/error.gsp"
-    ]
-
     def author = 'OSOCO'
     def authorEmail = 'info@osoco.es'
     def title = 'OWASP Zap Security Tests Plugin'
@@ -42,5 +38,4 @@ class ZapSecurityTestsGrailsPlugin {
         system: "GitHub", 
         url: "https://github.com/osoco/grails-zap-security-tests/issues"
     ]
-
 }
