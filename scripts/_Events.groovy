@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-includeTargets << new File("${zapSecurityTestsPluginDir}/scripts/_ZapSecurityTests.groovy")
+includeTargets << new File(zapSecurityTestsPluginDir, "scripts/_ZapSecurityTests.groovy")
 
 boolean runningSecurityTests
 boolean securityTestsFailed

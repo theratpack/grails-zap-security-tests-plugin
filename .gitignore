@@ -1,0 +1,7 @@
+*.log
+/target
+grails-zap-security-tests-*.zip
+grails-zap-security-tests-*.zip.sha1
+plugin.xml
+.settings
+web-app

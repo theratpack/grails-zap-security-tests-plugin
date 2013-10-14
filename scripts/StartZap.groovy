@@ -21,7 +21,11 @@
  * limitations under the License.
  */
 
-includeTargets << new File("${zapSecurityTestsPluginDir}/scripts/_ZapSecurityTests.groovy")
-target('default': "Starts the OWASP ZAP Proxy") {
-    startZap()
+includeTargets << new File(zapSecurityTestsPluginDir, "scripts/_ZapSecurityTests.groovy")
+
+target(startZap: "Start the OWASP ZAP Proxy") {
+    depends(zapConfiguration)
+    argsMap.daemon ? startZapDaemon() : startZapUI()
 }
+
+setDefaultTarget 'startZap'
