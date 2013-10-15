@@ -24,18 +24,18 @@ class ZapSecurityTestsGrailsPlugin {
 
     def version = "0.1"
     def grailsVersion = "2.0 > *"
-    def author = 'OSOCO'
+    def author = 'The Rat Pack'
     def authorEmail = 'info@osoco.es'
     def title = 'OWASP Zap Security Tests Plugin'
     def description = 'Security tests for your Grails app using OWASP ZAP proxy'
     def documentation = 'http://grails.org/plugin/zap-security-tests'
 
     def license = 'APACHE'
-    def organization = [ name: "OSOCO", url: "http://osoco.es/" ]
+    def organization = [ name: "The Rat Pack", url: "http://github.com/theratpack" ]
     def developers = [ [ name: "Rafael Luque" ], [ name: "Jose San Leandro"]]
-    def scm = [url: "https://github.com/osoco/grails-zap-security-tests/"]
+    def scm = [url: "https://github.com/theratpack/grails-zap-security-tests-plugin/"]
     def issueManagement = [
         system: "GitHub", 
-        url: "https://github.com/osoco/grails-zap-security-tests/issues"
+        url: "https://github.com/theratpack/grails-zap-security-tests-plugin/issues"
     ]
 }
