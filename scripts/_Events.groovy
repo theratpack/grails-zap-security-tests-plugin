@@ -30,11 +30,10 @@ def originalFunctionalTestPhaseCleanUp
 eventTestPhaseStart = { phaseName ->
     if ((phaseName == 'functional') && argsMap['zap']) {
 	event('StatusFinal', ['Running Security Tests using OWASP ZAP Proxy...'])
-	// zapConfiguration()
 	runningSecurityTests = true
 	customFunctionalTestPhaseCleanUp()
 	setZapProxyProperties()
-	startZap()
+	argsMap.daemon ? startZapDaemon() : startZapUI()
     }
 }
 
@@ -70,7 +69,7 @@ eventTestPhaseEnd = { phaseName ->
 }
 
 zapTestPhaseCleanUp = {
-    stopZap()
+    stopZapProcess()
     originalFunctionalTestPhaseCleanUp()
     runningSecurityTests = false
 }
