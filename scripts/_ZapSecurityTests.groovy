@@ -20,8 +20,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import groovy.util.ConfigSlurper
-
 import org.apache.tools.ant.BuildException
 import org.zaproxy.clientapi.core.ClientApi
 
@@ -30,16 +28,6 @@ includeTargets << grailsScript("_GrailsEvents")
 def zapConfig
 def zapClient
 boolean zapTimeoutExceeded 
-
-target('startZap': "Start the OWASP ZAP Proxy") {
-    depends(zapConfiguration)
-    argsMap['daemon'] ?  startZapDaemon() : startZapUI()
-}
-
-target('stopZap': "Stop the OWASP ZAP Proxy") {
-    depends(zapConfiguration)
-    stopZapProcess()
-}
 
 target('startZapUI': "Start the OWASP ZAP Proxy in UI mode") {
     // depends(zapConfiguration)
