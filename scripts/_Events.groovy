@@ -21,56 +21,58 @@
  * limitations under the License.
  */
 
-includeTargets << new File(zapSecurityTestsPluginDir, "scripts/_ZapSecurityTests.groovy")
+includeTargets << new File("${zapSecurityTestsPluginDir}/scripts/_ZapSecurityTests.groovy")
 
-boolean runningSecurityTests
+boolean runningSecurityTests = false
 boolean securityTestsFailed
 def originalFunctionalTestPhaseCleanUp
 
 eventTestPhaseStart = { phaseName ->
-    if ((phaseName == 'functional') && argsMap['zap']) {
-	event('StatusFinal', ['Running Security Tests using OWASP ZAP Proxy...'])
-	runningSecurityTests = true
-	customFunctionalTestPhaseCleanUp()
-	setZapProxyProperties()
-	argsMap.daemon ? startZapDaemon() : startZapUI()
+    def url = getTargetUrl()
+    println "phaseName -> ${phaseName}, url->${url} !!"
+    if ((phaseName == 'functional') && argsMap['zap'] && !runningSecurityTests) {
+        event('StatusFinal', ['Running Security Tests using OWASP ZAP Proxy...'])
+        runningSecurityTests = true
+        customFunctionalTestPhaseCleanUp()
+        setZapProxyProperties()
+        argsMap.daemon ? startZapDaemon() : startZapUI()
     }
 }
 
 eventTestPhaseEnd = { phaseName ->
+    println "phaseName -> ${phaseName}, runningSecurityTests -> ${runningSecurityTests}"
     if ((phaseName == 'functional') && runningSecurityTests) {
-	def baseUrl = System.getProperty(grailsSettings.FUNCTIONAL_BASE_URL_PROPERTY)
-	spiderUrl(baseUrl)
-	activeScanUrl(baseUrl)
-	storeSession()
+        def baseUrl = getTargetUrl()
+        spiderUrl(baseUrl)
+        activeScanUrl(baseUrl)
+        storeSession()
 
-	try {
-	    checkAlerts()
-	} catch (e) {
-	    securityTestsFailed = true
-	    throw e
-	} finally {
-	    zapTestPhaseCleanUp()
+      	try {
+            checkAlerts()
+        } catch (e) {
+            securityTestsFailed = true
+            throw e
+        } finally {
+            zapTestPhaseCleanUp()
 
-	    String label = securityTestsFailed ? "Security Tests FAILED" : "Security Tests PASSED"
-	    String msg = ""
-	    if (createTestReports) {
-		event("TestProduceReports", [])
-		msg += " - ZAP session stored"
-	    }
-	    if (securityTestsFailed) {
-		grailsConsole.error(label, msg)
-	    }
-	    else {
-		grailsConsole.addStatus("$label$msg")
-	    }
-	}
+            String label = securityTestsFailed ? "Security Tests FAILED" : "Security Tests PASSED"
+            String msg = ""
+            if (createTestReports) {
+                event("TestProduceReports", [])
+                msg += " - ZAP session stored"
+            }
+            if (securityTestsFailed) {
+                grailsConsole.error(label, msg)
+            } else {
+                grailsConsole.addStatus("$label$msg")
+            }
+        }
     }
 }
 
 zapTestPhaseCleanUp = {
     stopZapProcess()
-    originalFunctionalTestPhaseCleanUp()
+    // originalFunctionalTestPhaseCleanUp()
     runningSecurityTests = false
 }
 

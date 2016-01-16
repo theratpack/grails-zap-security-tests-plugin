@@ -1,6 +1,4 @@
 /*
- * ======================================================================
- *
  *    _ \   __|  _ \   __|  _ \ 
  *   (   |\__ \ (   | (    (   |    
  *  \___/ ____/\___/ \___|\___/ 
@@ -21,7 +19,10 @@
  * limitations under the License.
  */
 import org.apache.tools.ant.BuildException
+import grails.util.BuildSettingsHolder
 import org.zaproxy.clientapi.core.ClientApi
+import org.zaproxy.clientapi.gen.Spider
+import groovy.io.FileType
 
 includeTargets << grailsScript("_GrailsEvents")
 
@@ -43,15 +44,22 @@ target('startZapDaemon': "Start the OWASP ZAP Proxy in daemon mode") {
 
 target('zapConfiguration': 'Parse ZAP configuration') {
     if (!zapConfig) {
-	event('StatusFinal', ['Configuring ZAP Security Tests plugin...'])
-	def configPath = "${grailsSettings.baseDir}/grails-app/conf/ZapSecurityTestsConfig.groovy"
-	zapConfig = new ConfigSlurper().parse(new URL("file://${configPath}"))
+        event('StatusFinal', ['Configuring ZAP Security Tests plugin...'])
+        def configPath = "${grailsSettings.baseDir}/grails-app/conf/ZapSecurityTestsConfig.groovy"
+        zapConfig = new ConfigSlurper().parse(new URL("file://${configPath}"))
     }
+}
+
+getTargetUrl = {
+    System.getProperty(grailsSettings.FUNCTIONAL_BASE_URL_PROPERTY)    
+    ?: 'http://localhost:8080'
+//    ?: 'http://' + grailsSettings.SERVER_HOST + ':' + grailsSettings.SERVER_PORT_HTTP
 }
 
 initClient = {
     if (!zapClient) {
-	zapClient = new ClientApi(zapConfig.zap.proxyHost, zapConfig.zap.proxyPort, zapConfig.zap.debug)
+        zapClient = new ClientApi(zapConfig.zap.proxyHost, zapConfig.zap.proxyPort, zapConfig.zap.debug)
+        zapClient.httpSessions.setActiveSession(null, getTargetUrl(), "Session 0")
     }
 }
 
@@ -60,55 +68,69 @@ startZapProcess = { daemonMode ->
     def zapPort = zapConfig.zap.proxyPort
     def zapInstallDir = zapConfig.zap.installDir
     def zapTimeout = zapConfig.zap.timeout
-    ant.path(id: 'zapClasspath', { pathelement(location: "$zapInstallDir/zap.jar") })
+    def zapFile
+    new File("$zapInstallDir").eachFileMatch FileType.FILES, ~/zap-(\d+\.)+jar/, { zapFile = it.name }
+
+    ant.path(id: 'zapClasspath', { pathelement(location: "$zapInstallDir/$zapFile") })
     ant.java(
             classname: 'org.zaproxy.zap.ZAP', 
             classpathRef: 'zapClasspath', 
             fork: true, spawn: true, dir: zapInstallDir) {
-	if (daemonMode) {
-	    arg(value: '-daemon')
-	}
+        arg(value: '-port')
+        arg(value: zapPort)
+        arg(value: '-dir')
+        arg(value: zapInstallDir)
+        arg(value: '-config')
+        arg(value: 'api.disablekey=true')
+        if (daemonMode) {
+            arg(value: '-daemon')
+        }
     }
     event('StatusFinal', ['Waiting ZAP Proxy to start...'])
     ant.waitfor(maxwait: zapTimeout, maxwaitunit: 'millisecond', timeoutproperty: 'zapTimeoutExceeded') {
-	socket(server: zapAddress, port: zapPort)
+        socket(server: zapAddress, port: zapPort)
     }
     if (zapTimeoutExceeded) {
-	def msg = "ZAP proxy dit not start in ${zapTimeout}ms or it is not listening at the proxy port $zapPort"
-	event('StatusError', [msg])
-	exit 1
+        def msg = "ZAP proxy dit not start in ${zapTimeout}ms or it is not listening at the proxy port $zapPort"
+        event('StatusError', [msg])
+        exit 1
     } else {
-	event('StatusUpdate', ["ZAP proxy started and listening at proxy port $zapPort"])
+        event('StatusUpdate', ["ZAP proxy started and listening at proxy port $zapPort"])
     }
 }
 
 stopZapProcess = {
     event('StatusFinal', ["Stopping OWASP ZAP Proxy..."])
     try {
-	initClient()
-	zapClient.stopZap()
+        initClient()
+        zapClient.core.shutdown(null) // apiKey
     } catch (Exception e) {
-	throw new BuildException(e)
+        throw new BuildException(e)
     }
 }
 
 spiderUrl = { url ->
     event('StatusFinal', ["Spidering [$url]..."])
     try {
-	initClient()
-	zapClient.spiderUrl(url)
+        initClient()
+        zapClient.httpSessions
+//        zapClient.spiderUrl(url)
+        zapClient.spider.scan(null, url, "", "5", "Default Context")
     } catch (Exception e) {
-	throw new BuildException(e)
+        throw new BuildException(e)
     }
 }
 
 activeScanUrl = { url ->
     event('StatusFinal', ["Active scanning [$url]..."])
     try {
-	initClient()
-	zapClient.activeScanUrl(url)
+        initClient()
+        //        zapClient.activeScanUrl(url)
+        // zapClient.activeScanSiteInScope(null, url)
+        zapClient.ascan.scan(null, url, "true", "true", "Default Policy", "", "")
+        // api, url, recurse, inscopeonly, scanpolicyname, method, postdata
     } catch (Exception e) {
-	throw new BuildException(e)
+        throw new BuildException(e)
     }
 }
 
@@ -124,13 +146,14 @@ storeSession = {
     def sessionName = "zapReport-${new Date().format('yyyy-MM-dd-HH-mm-ss')}"
     def zapReportsDir = "${grailsSettings.testReportsDir}/${zapConfig.zap.reportsDir}"
     ant.mkdir(dir: "${zapReportsDir}")
-    saveZapSession("${grailsSettings.baseDir}/${zapReportsDir}/${sessionName}")
+    ant.touch(file: "${zapReportsDir}/${sessionName}.session") // This shouldn't be needed, but zap responds with "Internal failure" if the file does not exist beforehand
+    saveZapSession("${zapReportsDir}/${sessionName}")
 }
 
 saveZapSession = { name ->
     event('StatusFinal', ["Storing ZAP session at $name..."])
     initClient()
-    zapClient.saveSession(name)
+    zapClient.core.saveSession(null, name, "true")
 }
 
 setZapProxyProperties = {

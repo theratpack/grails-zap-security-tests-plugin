@@ -21,7 +21,8 @@
  * limitations under the License.
  */
 
-includeTargets << new File(zapSecurityTestsPluginDir, "scripts/_ZapSecurityTests.groovy")
+includeTargets << new File("${zapSecurityTestsPluginDir}/scripts/_ZapSecurityTests.groovy")
+//includeTargets << grailsScript("scripts/_ZapSecurityTests.groovy")
 
 target(startZap: "Start the OWASP ZAP Proxy") {
     depends(zapConfiguration)
