@@ -29,7 +29,6 @@ def originalFunctionalTestPhaseCleanUp
 
 eventTestPhaseStart = { phaseName ->
     def url = getTargetUrl()
-    println "phaseName -> ${phaseName}, url->${url} !!"
     if ((phaseName == 'functional') && argsMap['zap'] && !runningSecurityTests) {
         event('StatusFinal', ['Running Security Tests using OWASP ZAP Proxy...'])
         runningSecurityTests = true
@@ -40,7 +39,6 @@ eventTestPhaseStart = { phaseName ->
 }
 
 eventTestPhaseEnd = { phaseName ->
-    println "phaseName -> ${phaseName}, runningSecurityTests -> ${runningSecurityTests}"
     if ((phaseName == 'functional') && runningSecurityTests) {
         def baseUrl = getTargetUrl()
         spiderUrl(baseUrl)
