@@ -28,7 +28,6 @@ boolean securityTestsFailed
 def originalFunctionalTestPhaseCleanUp
 
 eventTestPhaseStart = { phaseName ->
-    def url = getTargetUrl()
     if ((phaseName == 'functional') && argsMap['zap'] && !runningSecurityTests) {
         event('StatusFinal', ['Running Security Tests using OWASP ZAP Proxy...'])
         runningSecurityTests = true
