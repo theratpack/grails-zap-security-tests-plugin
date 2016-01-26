@@ -54,7 +54,7 @@ target('zapConfiguration': 'Parse ZAP configuration') {
     if (!zapConfig) {
         event('StatusFinal', ['Configuring ZAP Security Tests plugin...'])
         def configPath = "${grailsSettings.baseDir}/grails-app/conf/ZapSecurityTestsConfig.groovy"
-        zapConfig = new ConfigSlurper().parse(new URL("file://${configPath}"))
+        zapConfig = new ConfigSlurper().parse(new URL("file:///${configPath}"))
     }
 }
 
