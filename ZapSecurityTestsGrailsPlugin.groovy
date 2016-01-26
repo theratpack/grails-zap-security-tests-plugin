@@ -22,7 +22,7 @@
  */
 class ZapSecurityTestsGrailsPlugin {
 
-    def version = "0.1.3"
+    def version = "0.1.4-SNAPSHOT"
     def grailsVersion = "2.0 > *"
     def author = 'The Rat Pack'
     def authorEmail = 'info@osoco.es'
